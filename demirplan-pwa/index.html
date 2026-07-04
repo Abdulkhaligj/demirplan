@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DəmirPlan">
+<meta name="theme-color" content="#131417">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<title>DəmirPlan — Meşq və Qida İzləyici</title>
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch((e) => console.log("SW xətası:", e));
+  });
+}
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,600;0,700;0,800;0,900;1,900&display=swap');
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; background: #131417; color: #f2f3f5;
+  font-family: 'Barlow', -apple-system, system-ui, sans-serif; }
+body { padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+.wrap { max-width: 560px; margin: 0 auto; padding: 16px 14px 20px;
+  padding-top: calc(16px + env(safe-area-inset-top)); }
+header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 16px; }
+.brandTop { font-size: 10px; letter-spacing: 3px; color: #8a8f98; font-weight: 600; }
+.brand { font-size: 27px; font-weight: 900; font-style: italic; margin: 0; letter-spacing: -0.5px; }
+.brand span { color: #ffb020; }
+.hstat { text-align: right; }
+.hstat .l { font-size: 10px; color: #8a8f98; text-transform: uppercase; letter-spacing: 1px; }
+.hstat .v { font-size: 15px; font-weight: 700; }
+.card { background: #1b1d22; border: 1px solid #2a2d34; border-radius: 14px; padding: 15px; margin-bottom: 12px; }
+.exName { font-size: 16px; font-weight: 700; }
+.muted { color: #8a8f98; font-size: 13px; }
+.para { font-size: 14px; line-height: 1.6; color: #cdd1d8; margin: 4px 0 0; }
+/* günlər */
+.dayRow { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch; }
+.dayBtn { min-width: 50px; padding: 8px 4px; display: flex; flex-direction: column; align-items: center;
+  background: #1b1d22; border: 1px solid #2a2d34; border-radius: 10px; color: #8a8f98;
+  font-family: inherit; flex-shrink: 0; }
+.dayBtn .dl { font-size: 9px; letter-spacing: 1px; }
+.dayBtn .dn { font-size: 19px; font-weight: 800; }
+.dayBtn.active { background: #22242b; border-color: #ffb020; color: #ffb020; }
+.dayHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.dayTitle { font-size: 23px; font-weight: 900; font-style: italic; margin: 0; }
+.pct { font-size: 21px; font-weight: 800; color: #ffb020; text-align: right; }
+.pct.done { color: #4ade80; }
+.pctSub { font-size: 10px; color: #8a8f98; text-align: right; }
+/* setlər */
+.exHead { width: 100%; display: flex; justify-content: space-between; align-items: center;
+  background: none; border: none; color: inherit; padding: 0; text-align: left; font-family: inherit; }
+.chev { color: #8a8f98; transition: transform .2s; }
+.chev.open { transform: rotate(180deg); }
+.setHead, .setRow { display: grid; grid-template-columns: 30px 1fr 1fr 46px; gap: 8px; align-items: center; }
+.setHead { font-size: 9px; color: #8a8f98; letter-spacing: 1px; margin: 12px 0 6px; }
+.setRow { margin-bottom: 8px; }
+input, select { width: 100%; background: #131417; border: 1px solid #2a2d34; border-radius: 8px;
+  color: #f2f3f5; padding: 11px 10px; font-size: 16px; font-family: inherit; -webkit-appearance: none; }
+input:focus, select:focus { outline: 2px solid #ffb020; border-color: #ffb020; }
+.setNum { color: #8a8f98; font-weight: 700; }
+.chk { width: 44px; height: 44px; border-radius: 10px; border: 2px solid #2a2d34; background: none;
+  color: #131417; font-size: 18px; font-weight: 900; }
+.chk.on { background: #4ade80; border-color: #4ade80; }
+.leftAmber { border-left: 3px solid #ffb020; }
+.leftGreen { border-left: 3px solid #4ade80; }
+.leftBlue { border-left: 3px solid #60a5fa; }
+/* stat qutuları */
+.statRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.statRow4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px; }
+.statBox { background: #1b1d22; border: 1px solid #2a2d34; border-radius: 14px; padding: 12px 10px; }
+.statBox .l { font-size: 10px; color: #8a8f98; text-transform: uppercase; letter-spacing: 1px; }
+.statBox .v { font-size: 19px; font-weight: 800; margin-top: 2px; }
+.statBox .s { font-size: 11px; margin-top: 2px; color: #8a8f98; }
+/* forma */
+.formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.field label { display: block; font-size: 10px; color: #8a8f98; text-transform: uppercase;
+  letter-spacing: .5px; margin-bottom: 4px; }
+.btn { width: 100%; padding: 14px; background: #ffb020; color: #131417; border: none; border-radius: 11px;
+  font-size: 15px; font-weight: 800; font-family: inherit; letter-spacing: .5px; }
+.btn:disabled { opacity: .5; }
+.btn:active { filter: brightness(.92); }
+/* yemək */
+.meal { padding: 10px 0; border-bottom: 1px solid #2a2d34; }
+.meal:last-child { border-bottom: none; }
+.mealT { font-weight: 800; font-size: 12px; color: #ffb020; letter-spacing: .5px; text-transform: uppercase; }
+.mealI { font-size: 14.5px; margin-top: 3px; line-height: 1.5; }
+/* şəkil yükləmə */
+.upZone { display: flex; align-items: center; justify-content: center; margin-top: 12px;
+  border: 2px dashed #2a2d34; border-radius: 12px; min-height: 120px; background: #16181c; padding: 10px; }
+.upZone img { max-height: 240px; max-width: 100%; border-radius: 10px; }
+/* siyahılar */
+.rowItem { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #2a2d34; }
+.rowItem:last-child { border-bottom: none; }
+.delBtn { background: none; border: none; color: #8a8f98; font-size: 15px; padding: 4px 6px; }
+/* alt tab bar */
+.tabbar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(20,21,25,.92);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-top: 1px solid #2a2d34;
+  display: flex; padding: 8px 4px calc(8px + env(safe-area-inset-bottom)); z-index: 40; }
+.tab { flex: 1; background: none; border: none; color: #8a8f98; font-family: inherit;
+  display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 4px 0; }
+.tab .ic { font-size: 20px; }
+.tab .tl { font-size: 10px; font-weight: 700; }
+.tab.active { color: #ffb020; }
+/* toast */
+#toast { position: fixed; bottom: calc(90px + env(safe-area-inset-bottom)); left: 50%;
+  transform: translateX(-50%); background: #ffb020; color: #131417; padding: 10px 20px;
+  border-radius: 10px; font-weight: 800; font-size: 14px; box-shadow: 0 6px 24px rgba(0,0,0,.4);
+  z-index: 50; display: none; white-space: nowrap; }
+.err { color: #f87171; font-size: 13.5px; margin-top: 10px; }
+svg { width: 100%; height: auto; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="brandTop">HƏFTƏLİK MEŞQ VƏ QİDA</div>
+      <h1 class="brand">DƏMİR<span>PLAN</span></h1>
+    </div>
+    <div class="hstat">
+      <div class="l">Çəki</div>
+      <div class="v" id="hWeight">—</div>
+    </div>
+  </header>
+  <main id="view"></main>
+</div>
+
+<nav class="tabbar">
+  <button class="tab" data-tab="program"><span class="ic">🏋️</span><span class="tl">Proqram</span></button>
+  <button class="tab" data-tab="nutrition"><span class="ic">🥗</span><span class="tl">Qida</span></button>
+  <button class="tab" data-tab="bodyfat"><span class="ic">📷</span><span class="tl">Yağ %</span></button>
+  <button class="tab" data-tab="body"><span class="ic">📏</span><span class="tl">Ölçülər</span></button>
+  <button class="tab" data-tab="history"><span class="ic">📋</span><span class="tl">Tarixçə</span></button>
+</nav>
+<div id="toast"></div>
+
+<script>
+// ─── PROQRAM ───────────────────────────────────────────────
+const PROGRAM = [
+ {day:1,key:"d1",title:"PUSH",subtitle:"Sinə fokus",type:"is",cardio:"Kardio: 10 dəq",exercises:[
+  {id:"bench",name:"Bench press",sets:4,reps:"6–8"},
+  {id:"incdb",name:"Incline dumbbell press",sets:3,reps:"8–10"},
+  {id:"shpress",name:"Dumbbell shoulder press",sets:3,reps:"8–10"},
+  {id:"latraise",name:"Lateral raise",sets:4,reps:"12–15"},
+  {id:"pushdown",name:"Triceps pushdown",sets:3,reps:"10"}]},
+ {day:2,key:"d2",title:"PULL",subtitle:"Kürək və biceps",type:"is",cardio:"Kardio: 10 dəq",exercises:[
+  {id:"pullup",name:"Pull-ups / Lat pulldown",sets:4,reps:"8–10"},
+  {id:"bbrow",name:"Barbell row",sets:4,reps:"6–8"},
+  {id:"seatrow",name:"Seated row",sets:3,reps:"10"},
+  {id:"facepull",name:"Face pull",sets:3,reps:"12–15"},
+  {id:"dbcurl",name:"Dumbbell curl",sets:3,reps:"8–10"}]},
+ {day:3,key:"d3",title:"İSTİRAHƏT / KARDİO",subtitle:"Aktiv bərpa",type:"kardio",
+  cardio:"25 dəq sürətli yürüş və ya velosiped",exercises:[]},
+ {day:4,key:"d4",title:"LEGS + CORE",subtitle:"Ayaq və qarın",type:"is",cardio:null,exercises:[
+  {id:"squat",name:"Squat",sets:4,reps:"6"},
+  {id:"rdl",name:"Romanian deadlift",sets:3,reps:"8"},
+  {id:"legpress",name:"Leg press",sets:3,reps:"10"},
+  {id:"legcurl",name:"Leg curl",sets:3,reps:"12"},
+  {id:"calf",name:"Calf raise",sets:4,reps:"15"},
+  {id:"plank",name:"Plank",sets:3,reps:"45 san",isTime:true}]},
+ {day:5,key:"d5",title:"UPPER BODY",subtitle:"Qol + sinə",type:"is",cardio:"Kardio: 15 dəq",exercises:[
+  {id:"incbench",name:"Incline bench",sets:4,reps:"8"},
+  {id:"pullup5",name:"Pull-ups",sets:4,reps:"8"},
+  {id:"latraise5",name:"Lateral raises",sets:3,reps:"15"},
+  {id:"dbcurl5",name:"Dumbbell curl",sets:3,reps:"10"},
+  {id:"skull",name:"Skullcrusher",sets:3,reps:"10"}]},
+ {day:6,key:"d6",title:"YÜNGÜL KARDİO",subtitle:"20–30 dəq",type:"kardio",
+  cardio:"20–30 dəq yüngül kardio (yürüş, velosiped, üzgüçülük)",exercises:[]},
+ {day:7,key:"d7",title:"İSTİRAHƏT",subtitle:"Tam bərpa günü",type:"rest",cardio:null,exercises:[]},
+];
+
+const MEAL_PLANS = {
+ cut:{label:"Arıqlama (yağ yandırma)",desc:"Kalori defisiti (~15–20%). Yüksək zülal əzələni qoruyur.",meals:[
+  ["Səhər yeməyi","3 yumurta ağı + 1 tam yumurta (omlet), 2 dilim tam taxıl çörəyi, pomidor-xiyar salatı, yaşıl çay"],
+  ["Ara qəlyanaltı","1 alma və ya 150 q az yağlı qatıq"],
+  ["Nahar","150 q toyuq döş əti (qril), 100 q qarabaşaq və ya düyü, bol tərəvəz salatı (1 x.q. zeytun yağı)"],
+  ["Meşqdən əvvəl","1 banan və ya 30 q yulaf"],
+  ["Meşqdən sonra","Zülal kokteyli və ya 150 q kəsmik"],
+  ["Şam yeməyi","150 q balıq və ya hind toyuğu, buğlanmış tərəvəzlər, göyərti"]]},
+ maintain:{label:"Formanı saxlama",desc:"Kalori balansda. Sabit zülal, orta karbohidrat.",meals:[
+  ["Səhər yeməyi","Yulaf sıyığı (50 q yulaf + süd), 1 banan, 1 x.q. fındıq yağı, 2 yumurta"],
+  ["Ara qəlyanaltı","Bir ovuc qoz-fındıq + 1 meyvə"],
+  ["Nahar","150 q toyuq və ya mal əti, 150 q düyü/makaron, tərəvəz salatı"],
+  ["Meşqdən əvvəl","1 banan + 1 stəkan süd"],
+  ["Meşqdən sonra","Zülal kokteyli + 1 meyvə"],
+  ["Şam yeməyi","150 q balıq/toyuq, 100 q kartof və ya bulqur, tərəvəzlər, qatıq"]]},
+ bulk:{label:"Kütlə yığma (əzələ artımı)",desc:"Kalori artıqlığı (~10–15%). Zülal 1.8–2.2 q/kq.",meals:[
+  ["Səhər yeməyi","4 yumurta (omlet + pendir), 80 q yulaf südlə, 1 banan, bal"],
+  ["Ara qəlyanaltı","Kəsmik (200 q) + qoz-fındıq + quru meyvə"],
+  ["Nahar","200 q toyuq/mal əti, 200 q düyü və ya makaron, salat + zeytun yağı"],
+  ["Meşqdən əvvəl","Yulaf + banan + fıstıq yağı"],
+  ["Meşqdən sonra","Zülal kokteyli + 2 banan və ya xurma"],
+  ["Şam yeməyi","200 q balıq/ət, 150 q kartof/bulqur, tərəvəzlər"],
+  ["Yatmazdan əvvəl","200 q kəsmik və ya kazein kokteyli"]]},
+};
+
+// ─── SAXLAMA (localStorage — Safari-də işləyir) ────────────
+const store = {
+  get(k, fb){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; }catch(e){ return fb; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){ console.error(e); } },
+};
+
+let state = {
+  tab: "program",
+  activeDay: (()=>{ const wd = new Date().getDay(); return wd===0 ? 7 : wd; })(),
+  openEx: {},
+  logs: store.get("dp-logs", {}),
+  body: store.get("dp-body", []),
+  nutri: store.get("dp-nutri", {age:"",gender:"m",activity:"1.55",goal:"maintain"}),
+  bf: store.get("dp-bf", null),        // Navy metodu nəticəsi
+  ai: store.get("dp-ai", null),        // Aİ foto analizi nəticəsi
+  apiKey: store.get("dp-apikey", ""),
+  photo: null, photoType: null, aiLoading: false, aiError: null,
+};
+
+const todayISO = () => new Date().toISOString().slice(0,10);
+const fmtDate = iso => new Date(iso+"T00:00:00").toLocaleDateString("az-AZ",{day:"numeric",month:"short",year:"numeric"});
+const esc = s => String(s??"").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const latest = () => state.body.length ? [...state.body].sort((a,b)=>b.date.localeCompare(a.date))[0] : null;
+
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.style.display = "block";
+  clearTimeout(t._h); t._h = setTimeout(()=>{ t.style.display = "none"; }, 2400);
+}
+
+function saveAll(){
+  store.set("dp-logs", state.logs); store.set("dp-body", state.body);
+  store.set("dp-nutri", state.nutri); store.set("dp-bf", state.bf);
+  store.set("dp-ai", state.ai); store.set("dp-apikey", state.apiKey);
+}
+
+// ─── RENDER ────────────────────────────────────────────────
+function render(){
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active", b.dataset.tab===state.tab));
+  const l = latest();
+  document.getElementById("hWeight").textContent = l?.weight ? l.weight+" kq" : "—";
+  const v = document.getElementById("view");
+  if(state.tab==="program") v.innerHTML = renderProgram();
+  else if(state.tab==="nutrition") v.innerHTML = renderNutrition();
+  else if(state.tab==="bodyfat") v.innerHTML = renderBodyFat();
+  else if(state.tab==="body") v.innerHTML = renderBody();
+  else v.innerHTML = renderHistory();
+  window.scrollTo(0,0);
+}
+
+// ─── PROQRAM GÖRÜNÜŞÜ ─────────────────────────────────────
+function renderProgram(){
+  const d = PROGRAM[state.activeDay-1];
+  const key = d.key+"|"+todayISO();
+  const log = state.logs[key] || {};
+  const totalSets = d.exercises.reduce((s,e)=>s+e.sets,0);
+  const doneSets = d.exercises.reduce((s,e)=>s+((log[e.id]||[]).filter(x=>x&&x.done).length),0);
+  const pct = totalSets ? Math.round(doneSets/totalSets*100) : (log.__cardio?100:0);
+
+  let h = "";
+  if(state.ai?.trainingAdvice){
+    h += `<div class="card leftBlue"><span style="font-weight:800;color:#60a5fa">Aİ tövsiyəsi: </span>
+          <span class="para" style="display:inline">${esc(state.ai.trainingAdvice)}</span></div>`;
+  }
+  h += `<div class="dayRow">` + PROGRAM.map(p=>
+    `<button class="dayBtn ${p.day===state.activeDay?'active':''}" ${p.type==='rest'?'style="opacity:.7"':''}
+       onclick="setDay(${p.day})"><span class="dl">GÜN</span><span class="dn">${p.day}</span></button>`).join("") + `</div>`;
+
+  h += `<div class="dayHeader"><div><h2 class="dayTitle">${esc(d.title)}</h2>
+        <div class="muted">${esc(d.subtitle)}</div></div>`;
+  if(totalSets>0) h += `<div><div class="pct ${pct===100?'done':''}">${pct}%</div>
+        <div class="pctSub">${doneSets}/${totalSets} set</div></div>`;
+  h += `</div>`;
+
+  h += d.exercises.map((ex,i)=>{
+    const arr = log[ex.id]||[];
+    const dc = arr.filter(x=>x&&x.done).length;
+    const all = dc===ex.sets;
+    const open = state.openEx[d.key+ex.id] ?? (i===0);
+    let rows = "";
+    if(open){
+      rows = `<div class="setHead"><span>SET</span><span>${ex.isTime?'SANİYƏ':'ÇƏKİ (kq)'}</span><span>TƏKRAR</span><span></span></div>`;
+      for(let si=0; si<ex.sets; si++){
+        const s = arr[si]||{w:"",r:"",done:false};
+        rows += `<div class="setRow"><span class="setNum">${si+1}</span>
+          <input type="number" inputmode="decimal" placeholder="0" value="${esc(s.w)}"
+            onchange="setVal('${key}','${ex.id}',${si},'w',this.value)">
+          <input type="number" inputmode="numeric" placeholder="${ex.isTime?'45':esc(ex.reps.split('–')[0])}" value="${esc(s.r)}"
+            onchange="setVal('${key}','${ex.id}',${si},'r',this.value)">
+          <button class="chk ${s.done?'on':''}" onclick="toggleDone('${key}','${ex.id}',${si})">${s.done?'✓':''}</button></div>`;
+      }
+    }
+    return `<div class="card ${all?'leftGreen':'leftAmber'}">
+      <button class="exHead" onclick="toggleEx('${d.key}${ex.id}')">
+        <div><div class="exName">${esc(ex.name)}</div>
+        <div class="muted">${ex.sets} set × ${esc(ex.reps)} ${ex.isTime?'':'təkrar'}</div></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:13px;font-weight:700;color:${all?'#4ade80':'#8a8f98'}">${dc}/${ex.sets}</span>
+          <span class="chev ${open?'open':''}">▾</span></div>
+      </button>${rows}</div>`;
+  }).join("");
+
+  if(d.cardio){
+    h += `<div class="card" style="display:flex;align-items:center;justify-content:space-between">
+      <div><div class="exName">🏃 Kardio</div><div class="muted">${esc(d.cardio)}</div></div>
+      <button class="chk ${log.__cardio?'on':''}" onclick="toggleCardio('${key}')">${log.__cardio?'✓':''}</button></div>`;
+  }
+  if(d.type==="rest"){
+    h += `<div class="card" style="text-align:center;padding:36px 16px">
+      <div style="font-size:38px">😴</div>
+      <div style="font-size:18px;font-weight:700;margin-top:8px">Tam istirahət günü</div>
+      <div class="muted" style="margin-top:4px">Əzələlər istirahətdə böyüyür. Yaxşı yat, çox su iç.</div></div>`;
+  }
+  return h;
+}
+
+window.setDay = d => { state.activeDay = d; render(); };
+window.toggleEx = id => { state.openEx[id] = !(state.openEx[id] ?? false); render(); };
+window.setVal = (key, exId, si, f, v) => {
+  const log = state.logs[key] || (state.logs[key] = {});
+  const arr = log[exId] || (log[exId] = []);
+  while(arr.length<=si) arr.push({w:"",r:"",done:false});
+  arr[si][f] = v; saveAll();
+};
+window.toggleDone = (key, exId, si) => {
+  const log = state.logs[key] || (state.logs[key] = {});
+  const arr = log[exId] || (log[exId] = []);
+  while(arr.length<=si) arr.push({w:"",r:"",done:false});
+  arr[si].done = !arr[si].done; saveAll(); render();
+};
+window.toggleCardio = key => {
+  const log = state.logs[key] || (state.logs[key] = {});
+  log.__cardio = !log.__cardio; saveAll(); render();
+  toast(log.__cardio ? "Kardio tamamlandı ✓" : "Kardio ləğv edildi");
+};
+
+// ─── QİDALANMA ────────────────────────────────────────────
+function renderNutrition(){
+  const l = latest(), n = state.nutri;
+  const w = l?.weight, ht = l?.height, age = parseFloat(n.age);
+  let target=null, protein=null, fat=null, carbs=null;
+  if(w && ht && age){
+    const bmr = n.gender==="m" ? 10*w+6.25*ht-5*age+5 : 10*w+6.25*ht-5*age-161;
+    const tdee = bmr*parseFloat(n.activity);
+    target = n.goal==="cut" ? tdee*0.82 : n.goal==="bulk" ? tdee*1.12 : tdee;
+    protein = Math.round(w*(n.goal==="cut"?2.2:2.0));
+    fat = Math.round(target*0.25/9);
+    carbs = Math.round((target-protein*4-fat*9)/4);
+  }
+  const plan = MEAL_PLANS[n.goal];
+  let h = "";
+  if(state.ai?.nutritionAdvice){
+    h += `<div class="card leftBlue"><span style="font-weight:800;color:#60a5fa">Aİ tövsiyəsi: </span>
+          <span class="para" style="display:inline">${esc(state.ai.nutritionAdvice)}</span></div>`;
+  }
+  h += `<div class="card"><div class="exName" style="margin-bottom:12px">Kalori hesablayıcı</div>`;
+  if(!w || !ht) h += `<div style="color:#ffb020;font-size:13px;margin-bottom:10px">⚠ Əvvəlcə "Ölçülər" bölməsində çəki və boyunu qeyd et.</div>`;
+  h += `<div class="formGrid">
+    <div class="field"><label>Yaş</label><input type="number" inputmode="numeric" placeholder="25" value="${esc(n.age)}"
+      onchange="setNutri('age',this.value)"></div>
+    <div class="field"><label>Cins</label><select onchange="setNutri('gender',this.value)">
+      <option value="m" ${n.gender==='m'?'selected':''}>Kişi</option>
+      <option value="f" ${n.gender==='f'?'selected':''}>Qadın</option></select></div>
+    <div class="field"><label>Aktivlik</label><select onchange="setNutri('activity',this.value)">
+      <option value="1.375" ${n.activity==='1.375'?'selected':''}>Az aktiv (1–2 gün)</option>
+      <option value="1.55" ${n.activity==='1.55'?'selected':''}>Orta aktiv (3–5 gün)</option>
+      <option value="1.725" ${n.activity==='1.725'?'selected':''}>Çox aktiv (6–7 gün)</option></select></div>
+    <div class="field"><label>Məqsəd</label><select onchange="setNutri('goal',this.value)">
+      <option value="cut" ${n.goal==='cut'?'selected':''}>Arıqlama</option>
+      <option value="maintain" ${n.goal==='maintain'?'selected':''}>Formanı saxlama</option>
+      <option value="bulk" ${n.goal==='bulk'?'selected':''}>Kütlə yığma</option></select></div>
+  </div></div>`;
+
+  if(target){
+    h += `<div class="statRow4">
+      <div class="statBox"><div class="l">Hədəf kalori</div><div class="v" style="color:#ffb020">${Math.round(target)}</div><div class="s">kkal/gün</div></div>
+      <div class="statBox"><div class="l">Zülal</div><div class="v" style="color:#4ade80">${protein} q</div><div class="s">${protein*4} kkal</div></div>
+      <div class="statBox"><div class="l">Karbohidrat</div><div class="v" style="color:#60a5fa">${carbs} q</div><div class="s">${carbs*4} kkal</div></div>
+      <div class="statBox"><div class="l">Yağ</div><div class="v" style="color:#f0a5f8">${fat} q</div><div class="s">${fat*9} kkal</div></div>
+    </div>`;
+  }
+
+  h += `<div class="card"><div class="exName">${esc(plan.label)} — gündəlik menyu</div>
+    <div class="muted" style="margin-bottom:10px">${esc(plan.desc)}</div>` +
+    plan.meals.map(m=>`<div class="meal"><div class="mealT">${esc(m[0])}</div><div class="mealI">${esc(m[1])}</div></div>`).join("") +
+    `</div>
+    <div class="card muted" style="line-height:1.6;font-size:13px">💧 Gündə 2.5–3.5 litr su iç. Menyu nümunədir — məhsulları
+    oxşar kalorili alternativlərlə əvəz edə bilərsən. Hesablamalar təxminidir və fərdi tibbi məsləhəti əvəz etmir.</div>`;
+  return h;
+}
+window.setNutri = (f,v) => { state.nutri[f]=v; saveAll(); render(); };
+
+// ─── YAĞ ANALİZİ ──────────────────────────────────────────
+function renderBodyFat(){
+  const l = latest(), n = state.nutri;
+  let h = `<div class="card"><div class="exName">Bədən yağ faizi — ölçü ilə (Navy metodu)</div>
+    <div class="muted" style="margin-top:4px;line-height:1.5">Boyun və bel ölçüsünə əsasən ABŞ Donanması düsturu ilə
+    hesablanır. Boy "Ölçülər" bölməsindən götürülür${l?.height?` (${l.height} sm)`:' — əvvəlcə boyunu qeyd et'}.</div>
+    <div class="formGrid" style="margin-top:12px">
+      <div class="field"><label>Boyun (sm)</label><input id="bfNeck" type="number" inputmode="decimal" placeholder="38"
+        value="${esc(state.bf?.neck||'')}"></div>
+      <div class="field"><label>Bel (sm, göbək səviyyəsi)</label><input id="bfWaist" type="number" inputmode="decimal" placeholder="85"
+        value="${esc(state.bf?.waist||'')}"></div>`;
+  if(n.gender==="f") h += `<div class="field"><label>Omba (sm)</label><input id="bfHip" type="number" inputmode="decimal" placeholder="95"
+        value="${esc(state.bf?.hip||'')}"></div>`;
+  h += `</div><button class="btn" onclick="calcNavy()">Hesabla</button>`;
+  if(state.bf?.pct){
+    h += `<div class="statRow" style="margin-top:12px">
+      <div class="statBox"><div class="l">Yağ faizi</div><div class="v" style="color:#ffb020">${state.bf.pct}%</div></div>
+      <div class="statBox"><div class="l">Kateqoriya</div><div class="v" style="font-size:15px">${esc(state.bf.cat)}</div></div>
+      <div class="statBox"><div class="l">Tövsiyə</div><div class="v" style="font-size:15px;color:#4ade80">${esc(state.bf.rec)}</div></div>
+    </div>`;
+  }
+  h += `</div>`;
+
+  // Aİ foto analizi
+  h += `<div class="card"><div class="exName">📷 Aİ ilə foto analizi (istəyə bağlı)</div>
+    <div class="muted" style="margin-top:4px;line-height:1.5">Bədəninin şəklini yüklə — Claude Aİ vizual olaraq yağ faizini
+    qiymətləndirib meşq və qida tövsiyəsi verəcək. Bunun üçün Anthropic API açarı lazımdır
+    (console.anthropic.com-dan alınır). Açar yalnız sənin telefonunda saxlanılır.</div>
+    <div class="field" style="margin-top:12px"><label>Anthropic API açarı</label>
+      <input id="apiKey" type="password" placeholder="sk-ant-..." value="${esc(state.apiKey)}"
+        onchange="state.apiKey=this.value.trim();saveAll()"></div>
+    <label class="upZone" id="upZone">
+      <input type="file" accept="image/*" style="display:none" onchange="onPhoto(this)">
+      ${state.photo ? `<img src="${state.photo}" alt="şəkil">` :
+        `<div style="text-align:center;padding:24px 10px"><div style="font-size:32px">📷</div>
+         <div style="font-weight:700;margin-top:6px">Şəkil yüklə</div>
+         <div class="muted" style="font-size:12px">Toxun və qalereyadan seç</div></div>`}
+    </label>
+    ${state.aiError?`<div class="err">⚠ ${esc(state.aiError)}</div>`:""}
+    <button class="btn" style="margin-top:12px" onclick="analyzeAI()"
+      ${(!state.photo||state.aiLoading)?'disabled':''}>${state.aiLoading?'Analiz edilir…':'Aİ ilə analiz et'}</button>`;
+
+  if(state.ai){
+    h += `<div style="margin-top:14px">
+      <div class="statRow">
+        <div class="statBox"><div class="l">Yağ % (təxm.)</div><div class="v" style="color:#ffb020">${esc(state.ai.bodyFatMin)}–${esc(state.ai.bodyFatMax)}%</div></div>
+        <div class="statBox"><div class="l">Kateqoriya</div><div class="v" style="font-size:14px">${esc(state.ai.category)}</div></div>
+        <div class="statBox"><div class="l">Məqsəd</div><div class="v" style="font-size:14px;color:#4ade80">${state.ai.goal==='cut'?'Arıqlama':state.ai.goal==='bulk'?'Kütlə':'Saxlama'}</div></div>
+      </div>
+      <div class="exName" style="font-size:14px;margin-top:4px">Qiymətləndirmə</div>
+      <p class="para">${esc(state.ai.summary)}</p>
+      <div class="exName" style="font-size:14px;color:#ffb020;margin-top:10px">🏋 Meşq tövsiyəsi</div>
+      <p class="para">${esc(state.ai.trainingAdvice)}</p>
+      <div class="exName" style="font-size:14px;color:#4ade80;margin-top:10px">🥗 Qidalanma tövsiyəsi</div>
+      <p class="para">${esc(state.ai.nutritionAdvice)}</p>
+      <div class="muted" style="font-size:11.5px;margin-top:10px">Analiz: ${fmtDate(state.ai.date)}. Şəkilə əsaslanan
+      qiymətləndirmə təxminidir — dəqiq ölçmə üçün kaliper/bioimpedans istifadə et.</div></div>`;
+  }
+  h += `</div>`;
+  return h;
+}
+
+window.calcNavy = () => {
+  const l = latest();
+  const ht = l?.height;
+  const neck = parseFloat(document.getElementById("bfNeck").value);
+  const waist = parseFloat(document.getElementById("bfWaist").value);
+  const hipEl = document.getElementById("bfHip");
+  const hip = hipEl ? parseFloat(hipEl.value) : null;
+  if(!ht){ toast("Əvvəlcə boyunu 'Ölçülər'də qeyd et"); return; }
+  if(!neck || !waist || (state.nutri.gender==="f" && !hip)){ toast("Bütün ölçüləri daxil et"); return; }
+  let pct;
+  if(state.nutri.gender==="m"){
+    if(waist-neck<=0){ toast("Bel ölçüsü boyundan böyük olmalıdır"); return; }
+    pct = 495/(1.0324-0.19077*Math.log10(waist-neck)+0.15456*Math.log10(ht))-450;
+  } else {
+    if(waist+hip-neck<=0){ toast("Ölçüləri yoxla"); return; }
+    pct = 495/(1.29579-0.35004*Math.log10(waist+hip-neck)+0.22100*Math.log10(ht))-450;
+  }
+  pct = Math.round(pct*10)/10;
+  const m = state.nutri.gender==="m";
+  let cat, rec;
+  if(pct < (m?6:14)) { cat="Çox aşağı"; rec="Kütlə yığ"; }
+  else if(pct < (m?14:21)) { cat="Atletik"; rec="Saxla/Kütlə"; }
+  else if(pct < (m?18:25)) { cat="Fit"; rec="Saxla"; }
+  else if(pct < (m?25:32)) { cat="Orta"; rec="Yüngül arıqlama"; }
+  else { cat="Artıq yağ"; rec="Arıqlama"; }
+  state.bf = { pct, cat, rec, neck, waist, hip, date: todayISO() };
+  if(pct >= (m?25:32)) state.nutri.goal = "cut";
+  else if(pct < (m?12:19)) state.nutri.goal = "bulk";
+  saveAll(); render(); toast("Yağ faizi hesablandı ✓");
+};
+
+window.onPhoto = inp => {
+  const f = inp.files && inp.files[0];
+  if(!f) return;
+  if(!f.type.startsWith("image/")){ state.aiError="Zəhmət olmasa şəkil faylı seç."; render(); return; }
+  const r = new FileReader();
+  r.onload = () => { state.photo = r.result; state.photoType = f.type; state.aiError = null; render(); };
+  r.readAsDataURL(f);
+};
+
+window.analyzeAI = async () => {
+  if(!state.photo) return;
+  if(!state.apiKey){ state.aiError = "API açarı daxil et (console.anthropic.com)."; render(); return; }
+  state.aiLoading = true; state.aiError = null; render();
+  try{
+    const l = latest();
+    const ctx = [
+      l?.weight?`Çəki: ${l.weight} kq`:"", l?.height?`Boy: ${l.height} sm`:"",
+      state.nutri.age?`Yaş: ${state.nutri.age}`:"",
+      `Cins: ${state.nutri.gender==="m"?"kişi":"qadın"}`,
+    ].filter(Boolean).join(", ");
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": state.apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: [
+          { type: "image", source: { type: "base64", media_type: state.photoType, data: state.photo.split(",")[1] } },
+          { type: "text", text: `Sən fitness məsləhətçisisən. Bu bədən şəklinə əsasən vizual olaraq təxmini bədən yağ faizini qiymətləndir. İstifadəçi məlumatı: ${ctx}.
+
+YALNIZ aşağıdakı JSON formatında cavab ver, heç bir əlavə mətn və ya Markdown olmadan:
+{"bodyFatMin": rəqəm, "bodyFatMax": rəqəm, "category": "kateqoriya azərbaycanca", "summary": "2-3 cümlə vizual qiymətləndirmə azərbaycanca", "goal": "cut|maintain|bulk", "trainingAdvice": "2-3 cümlə meşq tövsiyəsi azərbaycanca (PPL proqramına uyğunlaşdırma: kardio, set sayı və s.)", "nutritionAdvice": "2-3 cümlə qidalanma tövsiyəsi azərbaycanca"}
+
+Əgər şəkil bədən şəkli deyilsə: {"error": "səbəb azərbaycanca"}` },
+        ]}],
+      }),
+    });
+    const data = await res.json();
+    if(data.error){ state.aiError = data.error.message || "API xətası. Açarı yoxla."; state.aiLoading = false; render(); return; }
+    const text = (data.content||[]).filter(i=>i.type==="text").map(i=>i.text).join("\n");
+    const parsed = JSON.parse(text.replace(/```json|```/g,"").trim());
+    if(parsed.error){ state.aiError = parsed.error; state.aiLoading = false; render(); return; }
+    state.ai = { ...parsed, date: todayISO() };
+    if(["cut","maintain","bulk"].includes(parsed.goal)) state.nutri.goal = parsed.goal;
+    saveAll(); state.aiLoading = false; render();
+    toast("Analiz tamamlandı ✓ Qida planı yeniləndi");
+  }catch(e){
+    console.error(e);
+    state.aiError = "Analiz zamanı xəta baş verdi. İnternet bağlantısını və API açarını yoxla.";
+    state.aiLoading = false; render();
+  }
+};
+
+// ─── ÖLÇÜLƏR ──────────────────────────────────────────────
+function renderBody(){
+  const l = latest();
+  const bmi = l?.weight && l?.height ? (l.weight/Math.pow(l.height/100,2)).toFixed(1) : null;
+  const bl = v => v<18.5?["Az çəki","#60a5fa"]:v<25?["Normal","#4ade80"]:v<30?["Artıq çəki","#ffb020"]:["Piylənmə","#f87171"];
+  const sorted = [...state.body].sort((a,b)=>b.date.localeCompare(a.date));
+  const weights = [...state.body].filter(b=>b.weight).sort((a,b)=>a.date.localeCompare(b.date));
+
+  let h = `<div class="statRow">
+    <div class="statBox"><div class="l">Çəki</div><div class="v">${l?.weight?l.weight+" kq":"—"}</div></div>
+    <div class="statBox"><div class="l">Boy</div><div class="v">${l?.height?l.height+" sm":"—"}</div></div>
+    <div class="statBox"><div class="l">BKİ (BMI)</div><div class="v" ${bmi?`style="color:${bl(+bmi)[1]}"`:""}>${bmi||"—"}</div>
+      ${bmi?`<div class="s" style="color:${bl(+bmi)[1]}">${bl(+bmi)[0]}</div>`:""}</div>
+  </div>`;
+
+  if(weights.length>=2) h += renderChart(weights);
+
+  h += `<div class="card"><div class="exName" style="margin-bottom:12px">Yeni ölçü əlavə et</div>
+    <div class="formGrid">
+      <div class="field"><label>Tarix</label><input id="mDate" type="date" value="${todayISO()}"></div>
+      <div class="field"><label>Çəki (kq)</label><input id="mWeight" type="number" inputmode="decimal" placeholder="75.5"></div>
+      <div class="field"><label>Boy (sm)</label><input id="mHeight" type="number" inputmode="decimal" placeholder="178" value="${l?.height||''}"></div>
+      <div class="field"><label>Sinə (sm)</label><input id="mChest" type="number" inputmode="decimal" placeholder="100"></div>
+      <div class="field"><label>Bel (sm)</label><input id="mWaist" type="number" inputmode="decimal" placeholder="82"></div>
+      <div class="field"><label>Qol (sm)</label><input id="mArm" type="number" inputmode="decimal" placeholder="36"></div>
+    </div>
+    <button class="btn" onclick="saveMeasure()">Yadda saxla</button></div>`;
+
+  if(sorted.length){
+    h += `<div class="card"><div class="exName" style="margin-bottom:8px">Ölçü tarixçəsi</div>` +
+      sorted.map(b=>`<div class="rowItem">
+        <span class="muted" style="min-width:88px;font-size:12.5px">${fmtDate(b.date)}</span>
+        <span style="flex:1;font-size:14px">${b.weight?`⚖ ${b.weight}kq `:""}${b.chest?`· sinə ${b.chest} `:""}${b.waist?`· bel ${b.waist} `:""}${b.arm?`· qol ${b.arm}`:""}</span>
+        <button class="delBtn" onclick="delMeasure('${b.date}')">✕</button></div>`).join("") + `</div>`;
+  }
+  return h;
+}
+
+function renderChart(data){
+  const W=560,H=150,P=28;
+  const min=Math.min(...data.map(d=>d.weight))-1, max=Math.max(...data.map(d=>d.weight))+1;
+  const x=i=>P+i/Math.max(data.length-1,1)*(W-2*P);
+  const y=v=>H-P-(v-min)/(max-min)*(H-2*P);
+  const path=data.map((d,i)=>`${i===0?"M":"L"}${x(i)},${y(d.weight)}`).join(" ");
+  return `<div class="card"><div class="exName" style="margin-bottom:8px">Çəki dinamikası</div>
+    <svg viewBox="0 0 ${W} ${H}"><path d="${path}" fill="none" stroke="#ffb020" stroke-width="2.5" stroke-linecap="round"/>
+    ${data.map((d,i)=>`<circle cx="${x(i)}" cy="${y(d.weight)}" r="4" fill="#ffb020"/>
+      <text x="${x(i)}" y="${y(d.weight)-10}" text-anchor="middle" fill="#f2f3f5" font-size="11" font-weight="700">${d.weight}</text>`).join("")}
+    </svg>
+    <div style="display:flex;justify-content:space-between" class="muted" >
+      <span style="font-size:11px">${fmtDate(data[0].date)}</span>
+      <span style="font-size:11px">${fmtDate(data[data.length-1].date)}</span></div></div>`;
+}
+
+window.saveMeasure = () => {
+  const g = id => document.getElementById(id).value;
+  const date = g("mDate") || todayISO();
+  const vals = { weight:g("mWeight"), height:g("mHeight"), chest:g("mChest"), waist:g("mWaist"), arm:g("mArm") };
+  if(!vals.weight && !vals.height && !vals.chest && !vals.waist && !vals.arm){ toast("Ən azı bir ölçü daxil et"); return; }
+  const l = latest();
+  const entry = { date,
+    weight: vals.weight?parseFloat(vals.weight):null,
+    height: vals.height?parseFloat(vals.height):(l?.height||null),
+    chest: vals.chest?parseFloat(vals.chest):null,
+    waist: vals.waist?parseFloat(vals.waist):null,
+    arm: vals.arm?parseFloat(vals.arm):null };
+  state.body = [...state.body.filter(b=>b.date!==date), entry];
+  saveAll(); render(); toast("Ölçülər yadda saxlanıldı ✓");
+};
+window.delMeasure = date => { state.body = state.body.filter(b=>b.date!==date); saveAll(); render(); };
+
+// ─── TARİXÇƏ ──────────────────────────────────────────────
+function renderHistory(){
+  const entries = Object.entries(state.logs).map(([k,v])=>{
+    const [dayKey,date] = k.split("|");
+    const d = PROGRAM.find(p=>p.key===dayKey);
+    const doneSets = Object.entries(v).filter(([id])=>id!=="__cardio")
+      .reduce((s,[,arr])=>s+arr.filter(x=>x&&x.done).length,0);
+    const maxW = Object.entries(v).filter(([id])=>id!=="__cardio")
+      .flatMap(([,arr])=>arr.map(x=>parseFloat(x.w)||0));
+    return { date, d, doneSets, cardio:!!v.__cardio, best: maxW.length?Math.max(...maxW):0 };
+  }).filter(e=>e.doneSets>0||e.cardio).sort((a,b)=>b.date.localeCompare(a.date));
+
+  if(!entries.length){
+    return `<div class="card" style="text-align:center;padding:36px 16px">
+      <div style="font-size:34px">📋</div>
+      <div style="font-weight:700;font-size:17px;margin-top:8px">Hələ meşq qeydi yoxdur</div>
+      <div class="muted" style="margin-top:4px">"Proqram" bölməsində setləri tamamladıqca burada tarixçə yığılacaq.</div></div>`;
+  }
+  return entries.map(e=>`<div class="card" style="display:flex;justify-content:space-between;align-items:center">
+    <div><div class="exName">Gün ${e.d?.day} — ${esc(e.d?.title)}</div>
+    <div class="muted">${fmtDate(e.date)}</div></div>
+    <div style="text-align:right">
+      ${e.doneSets>0?`<div style="font-weight:800;color:#4ade80">${e.doneSets} set ✓</div>`:""}
+      ${e.best>0?`<div class="muted" style="font-size:12px">maks. ${e.best} kq</div>`:""}
+      ${e.cardio?`<div style="font-size:12px;color:#ffb020">kardio ✓</div>`:""}
+    </div></div>`).join("");
+}
+
+// ─── BAŞLAT ───────────────────────────────────────────────
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>{ state.tab=b.dataset.tab; render(); }));
+render();
+</script>
+</body>
+</html>
